@@ -1,0 +1,37 @@
+# ============================================
+# AtPlayer - @玩家 提醒插件配置
+# ============================================
+
+# @符号标识字符 (可自定义, 默认 @)
+mention-prefix: "@"
+
+# TITLE 提醒设置
+title:
+  # 主标题 (支持颜色代码 &)
+  title: "&e&l有人@你！"
+  # 副标题
+  subtitle: "&f{sender} &7在聊天中提到了你"
+  # 标题淡入时间 (tick, 20=1秒)
+  fade-in: 10
+  # 标题停留时间
+  stay: 40
+  # 标题淡出时间
+  fade-out: 10
+
+# 声音提醒设置
+sound:
+  # 声音类型: https://jd.papermc.io/paper/1.21.1/org/bukkit/Sound.html
+  type: BLOCK_NOTE_BLOCK_PLING
+  # 音量 (0.0 ~ 1.0)
+  volume: 1.0
+  # 音高 (0.5 ~ 2.0)
+  pitch: 2.0
+
+# 聊天消息中 @玩家 的颜色高亮 (使用原版颜色代码 § 或 MiniMessage)
+# 留空则不修改原消息
+highlight-color: "&b"
+
+# 排除列表 (这些玩家不会被 @)
+# exclude-players:
+#   - "Admin"
+#   - "NPC_001"
