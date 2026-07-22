@@ -3,12 +3,12 @@ version: 1.0.0-SNAPSHOT
 main: com.minemc.atplayer.AtPlayer
 api-version: "1.21"
 author: baqiwenye
-description: @mention plugin - notify players with title and sound when mentioned in chat
+description: "At mention plugin - notify players with title and sound when mentioned in chat"
 
 permissions:
   atplayer.use:
-    description: Allows using @mention in chat
+    description: "Allows using at-mention in chat"
     default: true
   atplayer.notify:
-    description: Receive notifications when mentioned
+    description: "Receive notifications when mentioned"
     default: true
