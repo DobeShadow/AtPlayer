@@ -5,6 +5,12 @@ api-version: "1.21"
 author: baqiwenye
 description: "At mention plugin - notify players with title and sound when mentioned in chat"
 
+commands:
+  atplayer:
+    description: "Toggle @mention notifications on/off"
+    usage: /<command> [toggle|status]
+    aliases: [at]
+
 permissions:
   atplayer.use:
     description: "Allows using at-mention in chat"

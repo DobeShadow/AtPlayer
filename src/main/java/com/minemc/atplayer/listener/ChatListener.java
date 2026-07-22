@@ -82,6 +82,7 @@ public class ChatListener implements Listener {
             if (target == null) continue;
             if (!target.isOnline()) continue;
             if (!target.hasPermission("atplayer.notify")) continue;
+            if (!plugin.isAtEnabled(target)) continue;
             if (target.equals(sender)) continue;
             if (plugin.getExcludePlayers().contains(target.getName())) continue;
 

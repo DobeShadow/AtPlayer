@@ -3,11 +3,21 @@ package com.minemc.atplayer;
 import com.minemc.atplayer.listener.ChatListener;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public final class AtPlayer extends JavaPlugin {
@@ -27,18 +37,57 @@ public final class AtPlayer extends JavaPlugin {
     private String highlightColor = "&b";
     private List<String> excludePlayers = new ArrayList<>();
 
+    // Players who have @ notifications disabled
+    private final Set<UUID> disabledPlayers = new HashSet<>();
+    private File dataFile;
+
     @Override
     public void onEnable() {
         instance = this;
+        dataFile = new File(getDataFolder(), "players.yml");
         loadConfig();
+        loadPlayerData();
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
+        getCommand("atplayer").setExecutor(this);
         getLogger().info("AtPlayer v" + getPluginMeta().getVersion() + " 已启动！");
     }
 
     @Override
     public void onDisable() {
+        savePlayerData();
         instance = null;
         getLogger().info("AtPlayer 已卸载！");
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
+                             @NotNull String label, @NotNull String @NotNull [] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(colorize("&c该命令只能由玩家执行！"));
+            return true;
+        }
+
+        if (args.length == 0 || args[0].equalsIgnoreCase("toggle")) {
+            UUID uuid = player.getUniqueId();
+            if (disabledPlayers.contains(uuid)) {
+                disabledPlayers.remove(uuid);
+                player.sendMessage(colorize("&a✔ 已开启 @提醒通知"));
+            } else {
+                disabledPlayers.add(uuid);
+                player.sendMessage(colorize("&c✘ 已关闭 @提醒通知"));
+            }
+            savePlayerData();
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("status")) {
+            boolean on = !disabledPlayers.contains(player.getUniqueId());
+            player.sendMessage(colorize("&7@提醒状态: " + (on ? "&a开启" : "&c关闭")));
+            return true;
+        }
+
+        player.sendMessage(colorize("&7用法: /at [toggle|status]"));
+        return true;
     }
 
     public void loadConfig() {
@@ -65,6 +114,33 @@ public final class AtPlayer extends JavaPlugin {
 
         highlightColor = colorize(cfg.getString("highlight-color", "&b"));
         excludePlayers = cfg.getStringList("exclude-players");
+    }
+
+    private void loadPlayerData() {
+        if (!dataFile.exists()) return;
+        FileConfiguration data = YamlConfiguration.loadConfiguration(dataFile);
+        disabledPlayers.clear();
+        for (String uuidStr : data.getStringList("disabled")) {
+            try {
+                disabledPlayers.add(UUID.fromString(uuidStr));
+            } catch (IllegalArgumentException ignored) {}
+        }
+    }
+
+    private void savePlayerData() {
+        FileConfiguration data = new YamlConfiguration();
+        List<String> uuidList = disabledPlayers.stream().map(UUID::toString).toList();
+        data.set("disabled", uuidList);
+        try {
+            dataFile.getParentFile().mkdirs();
+            data.save(dataFile);
+        } catch (IOException e) {
+            getLogger().log(Level.WARNING, "Failed to save player data", e);
+        }
+    }
+
+    public boolean isAtEnabled(Player player) {
+        return !disabledPlayers.contains(player.getUniqueId());
     }
 
     public void reload() {
