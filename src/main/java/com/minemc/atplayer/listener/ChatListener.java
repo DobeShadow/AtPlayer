@@ -1,5 +1,6 @@
 package com.minemc.atplayer.listener;
 
+import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.minemc.atplayer.AtPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.SoundCategory;
@@ -10,9 +11,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ChatListener implements Listener {
 
@@ -20,6 +23,41 @@ public class ChatListener implements Listener {
 
     public ChatListener(AtPlayer plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * TAB completion for @player in chat.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onTabComplete(AsyncTabCompleteEvent event) {
+        if (event.isCommand()) return;
+        if (!(event.getSender() instanceof Player sender)) return;
+        if (!sender.hasPermission("atplayer.use")) return;
+
+        String buffer = event.getBuffer();
+        String prefix = plugin.getMentionPrefix();
+
+        // Find the last @ position
+        int atIndex = buffer.lastIndexOf(prefix);
+        if (atIndex < 0) return;
+
+        // Get the partial name after @
+        String partial = buffer.substring(atIndex + prefix.length());
+        // Don't trigger if there's a space after @ (user just typed @ and nothing else)
+        // Actually, partial could be empty, meaning user wants all online players
+        if (partial.contains(" ")) return;
+
+        List<String> completions = Bukkit.getOnlinePlayers().stream()
+                .filter(p -> !p.equals(sender))
+                .filter(p -> partial.isEmpty() || p.getName().toLowerCase().startsWith(partial.toLowerCase()))
+                .filter(p -> !plugin.getExcludePlayers().contains(p.getName()))
+                .map(p -> prefix + p.getName())
+                .collect(Collectors.toList());
+
+        event.getCompletions().addAll(completions);
+        if (!completions.isEmpty()) {
+            event.setHandled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
