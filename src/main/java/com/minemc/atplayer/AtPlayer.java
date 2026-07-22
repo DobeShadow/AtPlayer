@@ -1,15 +1,18 @@
 package com.minemc.atplayer;
 
 import com.minemc.atplayer.listener.ChatListener;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
-public final class AtPlayer extends JavaPlugin {
+public final class AtPlayer extends JavaPlugin implements TabCompleter {
 
     private static AtPlayer instance;
 
@@ -49,6 +52,7 @@ public final class AtPlayer extends JavaPlugin {
         loadPlayerData();
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getCommand("atplayer").setExecutor(this);
+        getCommand("atplayer").setTabCompleter(this);
         getLogger().info("AtPlayer v" + getPluginMeta().getVersion() + " 已启动！");
     }
 
@@ -86,8 +90,43 @@ public final class AtPlayer extends JavaPlugin {
             return true;
         }
 
-        player.sendMessage(colorize("&7用法: /at [toggle|status]"));
+        // /at <玩家名> — manually notify a player
+        Player target = Bukkit.getPlayer(args[0]);
+        if (target == null || !target.isOnline()) {
+            player.sendMessage(colorize("&c找不到玩家: " + args[0]));
+            return true;
+        }
+        if (target.equals(player)) {
+            player.sendMessage(colorize("&c不能@自己！"));
+            return true;
+        }
+        if (!target.hasPermission("atplayer.notify") || !isAtEnabled(target)) {
+            player.sendMessage(colorize("&c该玩家已关闭@提醒或没有权限"));
+            return true;
+        }
+
+        // Send notification to target
+        String title = colorize(titleText);
+        String subtitle = colorize(subtitleText.replace("{sender}", player.getName()));
+        target.sendTitle(title, subtitle, titleFadeIn, titleStay, titleFadeOut);
+        target.playSound(target.getLocation(), soundType, org.bukkit.SoundCategory.MASTER, soundVolume, soundPitch);
+        player.sendMessage(colorize("&a已向 &e" + target.getName() + " &a发送@提醒"));
         return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                                 @NotNull String alias, @NotNull String @NotNull [] args) {
+        if (args.length == 1) {
+            String partial = args[0].toLowerCase();
+            return Bukkit.getOnlinePlayers().stream()
+                    .filter(p -> !p.equals(sender))
+                    .map(Player::getName)
+                    .filter(n -> n.toLowerCase().startsWith(partial))
+                    .sorted()
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        return List.of();
     }
 
     public void loadConfig() {

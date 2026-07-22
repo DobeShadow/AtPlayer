@@ -7,8 +7,8 @@ description: "At mention plugin - notify players with title and sound when menti
 
 commands:
   atplayer:
-    description: "Toggle @mention notifications on/off"
-    usage: /<command> [toggle|status]
+    description: "@mention notifications - toggle, status, or notify a player"
+    usage: /<command> [toggle|status|<玩家名>]
     aliases: [at]
 
 permissions:
