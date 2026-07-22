@@ -28,23 +28,22 @@ public class ChatListener implements Listener {
     /**
      * TAB completion for @player in chat.
      */
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOW)
     public void onTabComplete(AsyncTabCompleteEvent event) {
-        if (event.isCommand()) return;
         if (!(event.getSender() instanceof Player sender)) return;
         if (!sender.hasPermission("atplayer.use")) return;
 
+        // isCommand() may return true for chat in newer Paper — check buffer for @ instead
         String buffer = event.getBuffer();
+        plugin.getLogger().info("[DEBUG] TabComplete: isCommand=" + event.isCommand() + " buffer=" + buffer);
+
+        // Only handle buffers containing @ prefix (chat), not commands
         String prefix = plugin.getMentionPrefix();
+        if (!buffer.contains(prefix)) return;
 
-        // Find the last @ position
+        // Get partial name after the last @
         int atIndex = buffer.lastIndexOf(prefix);
-        if (atIndex < 0) return;
-
-        // Get the partial name after @
         String partial = buffer.substring(atIndex + prefix.length());
-        // Don't trigger if there's a space after @ (user just typed @ and nothing else)
-        // Actually, partial could be empty, meaning user wants all online players
         if (partial.contains(" ")) return;
 
         List<String> completions = Bukkit.getOnlinePlayers().stream()
@@ -57,6 +56,7 @@ public class ChatListener implements Listener {
         event.getCompletions().addAll(completions);
         if (!completions.isEmpty()) {
             event.setHandled(true);
+            plugin.getLogger().info("[DEBUG] Added " + completions.size() + " completions: " + completions);
         }
     }
 
