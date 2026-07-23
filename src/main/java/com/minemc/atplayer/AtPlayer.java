@@ -40,6 +40,13 @@ public final class AtPlayer extends JavaPlugin implements TabCompleter {
     private String highlightColor = "&b";
     private List<String> excludePlayers = new ArrayList<>();
 
+    // @all settings
+    private boolean atAllEnabled = true;
+    private String atAllKeyword = "all";
+    private String atAllPermission = "atplayer.all";
+    private String atAllTitle = "&c&l全体通知！";
+    private String atAllSubtitle = "&f{sender} &7发送了一条全员消息";
+
     // Players who have @ notifications disabled
     private final Set<UUID> disabledPlayers = new HashSet<>();
     private File dataFile;
@@ -153,6 +160,12 @@ public final class AtPlayer extends JavaPlugin implements TabCompleter {
 
         highlightColor = colorize(cfg.getString("highlight-color", "&b"));
         excludePlayers = cfg.getStringList("exclude-players");
+
+        atAllEnabled = cfg.getBoolean("at-all.enabled", true);
+        atAllKeyword = cfg.getString("at-all.keyword", "all");
+        atAllPermission = cfg.getString("at-all.permission", "atplayer.all");
+        atAllTitle = colorize(cfg.getString("at-all.title", "&c&l全体通知！"));
+        atAllSubtitle = colorize(cfg.getString("at-all.subtitle", "&f{sender} &7发送了一条全员消息"));
     }
 
     private void loadPlayerData() {
@@ -200,6 +213,11 @@ public final class AtPlayer extends JavaPlugin implements TabCompleter {
     public float getSoundPitch() { return soundPitch; }
     public String getHighlightColor() { return highlightColor; }
     public List<String> getExcludePlayers() { return excludePlayers; }
+    public boolean isAtAllEnabled() { return atAllEnabled; }
+    public String getAtAllKeyword() { return atAllKeyword; }
+    public String getAtAllPermission() { return atAllPermission; }
+    public String getAtAllTitle() { return atAllTitle; }
+    public String getAtAllSubtitle() { return atAllSubtitle; }
 
     public static String colorize(String text) {
         if (text == null) return "";

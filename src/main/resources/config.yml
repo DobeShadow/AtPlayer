@@ -31,6 +31,18 @@ sound:
 # 留空则不修改原消息
 highlight-color: "&b"
 
+# @所有人 设置
+at-all:
+  # 是否启用
+  enabled: true
+  # 关键词 (聊天输入 @all 即可触发)
+  keyword: "all"
+  # 使用权限 (留空则所有人可用)
+  permission: "atplayer.all"
+  # @所有人 专用的TITLE（覆盖默认title）
+  title: "&c&l全体通知！"
+  subtitle: "&f{sender} &7发送了一条全员消息"
+
 # 排除列表 (这些玩家不会被 @)
 # exclude-players:
 #   - "Admin"

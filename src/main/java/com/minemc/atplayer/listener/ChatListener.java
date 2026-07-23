@@ -33,10 +33,20 @@ public class ChatListener implements Listener {
         Matcher matcher = pattern.matcher(message);
 
         Set<Player> mentioned = new HashSet<>();
+        boolean atAllTriggered = false;
 
         while (matcher.find()) {
             String name = matcher.group(1);
             name = name.replaceAll("[,，。.!！？?]+$", "");
+
+            // Check for @all
+            if (plugin.isAtAllEnabled() && name.equalsIgnoreCase(plugin.getAtAllKeyword())) {
+                if (!atAllTriggered) {
+                    atAllTriggered = true;
+                    notifyAll(sender, message);
+                }
+                continue;
+            }
 
             Player target = Bukkit.getPlayer(name);
             if (target == null) continue;
@@ -52,7 +62,7 @@ public class ChatListener implements Listener {
         }
 
         // Highlight @mentions in chat message
-        if (!mentioned.isEmpty() && !plugin.getHighlightColor().isEmpty()) {
+        if (!plugin.getHighlightColor().isEmpty() && (!mentioned.isEmpty() || atAllTriggered)) {
             String colored = message.replaceAll(
                     regex,
                     plugin.getHighlightColor() + prefix + "$1" + "§r"
@@ -78,5 +88,41 @@ public class ChatListener implements Listener {
                 plugin.getSoundVolume(),
                 plugin.getSoundPitch()
         );
+    }
+
+    private void notifyAll(Player sender, String message) {
+        // Permission check
+        String perm = plugin.getAtAllPermission();
+        if (!perm.isEmpty() && !sender.hasPermission(perm)) {
+            sender.sendMessage(AtPlayer.colorize("&c你没有权限使用 @所有人！"));
+            return;
+        }
+
+        String title = plugin.getAtAllTitle();
+        String subtitle = plugin.getAtAllSubtitle().replace("{sender}", sender.getName());
+        int online = 0;
+
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            if (!target.hasPermission("atplayer.notify")) continue;
+            if (!plugin.isAtEnabled(target)) continue;
+            if (target.equals(sender)) continue;
+
+            target.sendTitle(
+                    title, subtitle,
+                    plugin.getTitleFadeIn(),
+                    plugin.getTitleStay(),
+                    plugin.getTitleFadeOut()
+            );
+            target.playSound(
+                    target.getLocation(),
+                    plugin.getSoundType(),
+                    SoundCategory.MASTER,
+                    plugin.getSoundVolume(),
+                    plugin.getSoundPitch()
+            );
+            online++;
+        }
+
+        sender.sendMessage(AtPlayer.colorize("&a已通知 &e" + online + " &a名在线玩家"));
     }
 }
